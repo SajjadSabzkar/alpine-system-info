@@ -24,7 +24,7 @@ lshw -html > "$NEW_FILE"
 
 echo "System Information Data Saved in : $NEW_FILE"
 
-#poweroff
+poweroff
 EOF
 #chmod file
 chmod +x  /usr/sbin/system_info.sh
@@ -55,7 +55,7 @@ start() {
 }
 
 stop() {
-   poweroff // if needed
+   return 0
 }
 EOF
 
