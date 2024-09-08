@@ -6,7 +6,7 @@ apk add lshw --repository=https://dl-cdn.alpinelinux.org/alpine/edge/community
 
 #system_info
 cat << 'EOF' > /usr/local/bin/system_info.sh
-#!/bin/bash
+#!/bin/sh
 
 BASE_DIR="/home/mr/reports"  
 mkdir -p $BASE_DIR
