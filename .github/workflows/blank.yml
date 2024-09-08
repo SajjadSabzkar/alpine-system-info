@@ -20,12 +20,12 @@ jobs:
         id: get_date
         run: echo "::set-output name=date::$(date +'%Y%m%d%H%M%S')"
 
-
-      - uses: ncipollo/release-action@v1
-
+      - name: Create Release
+        id: create_release
+        uses: ncipollo/release-action@v1
         with:
           tag: "UploadAt-${{ steps.get_date.outputs.date }}"
-          name: "Automatic Upload"
-          body: "Auto build"
+          name: "Download necessary files"
+          body: 'Download ${{ steps.extract_filenames.outputs.filenames }}'
           artifacts: output/*
-
+ 
