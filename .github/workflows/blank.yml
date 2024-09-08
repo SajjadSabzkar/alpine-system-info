@@ -21,11 +21,11 @@ jobs:
         run: echo "::set-output name=date::$(date +'%Y%m%d%H%M%S')"
 
 
-      - uses: "ncipollo/release-action@v1"
+      - uses: ncipollo/release-action@v1
+
         with:
           tag: "UploadAt-${{ steps.get_date.outputs.date }}"
           name: "Automatic Upload"
           body: "Auto build"
-          artifacts: |
-            /output/*
+          artifacts: /output/*
 
