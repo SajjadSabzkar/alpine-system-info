@@ -1,0 +1,12 @@
+bash
+linux-edge
+linux-firmware
+grub
+grub-efi
+efibootmgr
+grub-bios
+grub-mount
+os-prober
+e2fsprogs
+libstdc++
+gcompat
