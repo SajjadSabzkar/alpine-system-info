@@ -41,4 +41,26 @@ chmod +x /usr/sbin/autologin
 #replace autologin script
 sed -i 's@:respawn:/sbin/getty@:respawn:/sbin/getty -n -l /usr/sbin/autologin@g' /etc/inittab 
 
+cat << 'EOF'> /etc/init.d/system_info_service
+#!/sbin/openrc-run
+
+description="system info once after login"
+
+start_pre() {
+    /usr/sbin/system_info.sh
+}
+
+start() {
+    return 0
+}
+
+stop() {
+    return 0
+}
+EOF
+
+#chmod & add service 
+sudo chmod +x /etc/init.d/system_info_service
+sudo rc-update add system_info_service
+
 
