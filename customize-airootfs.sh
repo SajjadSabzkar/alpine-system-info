@@ -60,7 +60,7 @@ stop() {
 EOF
 
 #chmod & add service 
-sudo chmod +x /etc/init.d/system_info_service
-sudo rc-update add system_info_service
+chmod +x /etc/init.d/system_info_service
+rc-update add system_info_service
 
 
