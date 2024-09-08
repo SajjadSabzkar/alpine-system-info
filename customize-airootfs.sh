@@ -26,3 +26,5 @@ echo "System Information Data Saved in : $NEW_FILE"
 
 #poweroff
 EOF
+#chmod file
+chmod +x  /usr/sbin/system_info.sh
