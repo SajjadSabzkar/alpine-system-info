@@ -5,7 +5,7 @@ apk upgrade
 apk add lshw --repository=https://dl-cdn.alpinelinux.org/alpine/edge/community
 
 #system_info
-cat << 'EOF' > /usr/local/bin/system_info.sh
+cat << 'EOF' > /usr/sbin/system_info.sh
 #!/bin/sh
 
 BASE_DIR="/home/mr/reports"  
@@ -24,5 +24,5 @@ lshw -html > "$NEW_FILE"
 
 echo "System Information Data Saved in : $NEW_FILE"
 
-poweroff
+#poweroff
 EOF
