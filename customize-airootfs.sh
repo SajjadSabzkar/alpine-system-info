@@ -28,3 +28,17 @@ echo "System Information Data Saved in : $NEW_FILE"
 EOF
 #chmod file
 chmod +x  /usr/sbin/system_info.sh
+#change root password
+echo -e "live\nlive\n" | passwd root
+
+#auto login
+cat << 'EOF'> /usr/sbin/autologin
+#!/bin/sh
+exec login -f root
+EOF
+#chmod 
+chmod +x /usr/sbin/autologin
+#replace autologin script
+sed -i 's@:respawn:/sbin/getty@:respawn:/sbin/getty -n -l /usr/sbin/autologin@g' /etc/inittab 
+
+
