@@ -55,7 +55,7 @@ start() {
 }
 
 stop() {
-    return 0
+   poweroff // if needed
 }
 EOF
 
