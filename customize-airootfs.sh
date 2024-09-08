@@ -24,5 +24,5 @@ lshw -html > "$NEW_FILE"
 
 echo "System Information Data Saved in : $NEW_FILE"
 
-shutdown -h now
+poweroff
 EOF
