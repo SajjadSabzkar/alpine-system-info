@@ -28,7 +28,7 @@ jobs:
         run: |
           git clone https://gitlab.com/tearch-linux/applications-and-tools/teaiso
           cd teaiso
-          make && make install
+          sudo make && sudo make install
 
       - name: Build ISO
         run: sudo bash build.sh

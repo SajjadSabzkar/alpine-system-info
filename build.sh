@@ -37,7 +37,12 @@ if [ ! -d "$SCRIPT_DIR/teaiso" ]; then
 fi
 
 cd "$SCRIPT_DIR/teaiso"
-make && make install
+make
+if [ "$(id -u)" -ne 0 ]; then
+    sudo make install
+else
+    make install
+fi
 cd "$SCRIPT_DIR"
 
 # ─── ساخت ISO ───
