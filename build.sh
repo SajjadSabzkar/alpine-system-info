@@ -47,10 +47,10 @@ cd "$SCRIPT_DIR"
 
 # ─── افزایش حجم پارتیشن writable از 4MB به 256MB ───
 # teaiso به طور پیش‌فرض فقط 4MB فضای ذخیره می‌سازد که برای گزارش‌ها کافی نیست
+# فقط writable.img را بزرگ می‌کنیم، efi.img باید بدون تغییر بماند
 echo "[2.5/4] Enlarging writable partition to 256MB..."
-TEAISO_ISOWORK="/usr/lib/teaiso/distro/../common/isowork.py"
 if [ -f "/usr/lib/teaiso/common/isowork.py" ]; then
-    sed -i 's/bs=4M count=1 oflag=sync/bs=4M count=64 oflag=sync/' /usr/lib/teaiso/common/isowork.py
+    sed -i '/writable.img/s/bs=4M count=1 oflag=sync/bs=4M count=64 oflag=sync/' /usr/lib/teaiso/common/isowork.py
     echo "  patched writable.img size to 256MB"
 else
     echo "  WARNING: could not find teaiso isowork.py to patch writable size"
