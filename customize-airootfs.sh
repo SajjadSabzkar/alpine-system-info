@@ -35,10 +35,17 @@ cat << 'SERVICE' > /etc/init.d/system_info_service
 
 description="SysInfo Auto-Collector"
 
+depend() {
+    need sysinit
+    after localmount bootmisc
+}
+
 start() {
     ebegin "Starting SysInfo Collector"
+    # صبر برای شناسایی کامل دستگاه‌ها توسط udev / mdev
+    sleep 5
     /usr/sbin/system_info.sh &
-    eend $?
+    eend 0
 }
 SERVICE
 chmod +x /etc/init.d/system_info_service

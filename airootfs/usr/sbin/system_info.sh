@@ -2,23 +2,28 @@
 # SysInfo Collector - جمع‌آوری جامع اطلاعات سخت‌افزاری
 # اجرا هنگام بوت از روی فلش USB
 
-set -e
+# از set -e استفاده نمی‌کنیم تا حتی اگر یکی از دستورات جمع‌آوری fail شود،
+# اسکریپت ادامه داده و سیستم خاموش شود.
 
 LOG="/tmp/sysinfo.log"
 exec > "$LOG" 2>&1
 
 echo "=== SysInfo Collector Started at $(date) ==="
 
-# ─── پیدا کردن فلش USB (خود فلشی که بوت شده) ───
+# ─── پیدا کردن فلش USB ای که سیستم از روش بوت شده ───
+# در live بوت teaiso، فلش boot شده روی /cdrom یا /source مونت میشه
 find_boot_device() {
-    BOOT_DEV=""
-    # روش 1: پیدا کردن از mount point
-    BOOT_DEV=$(findmnt -n -o SOURCE / 2>/dev/null | sed 's/[0-9]*$//' | sed 's/p[0-9]*$//' | head -1)
-    # روش 2: پیدا کردن از /proc/cmdline
+    # روش 1: دستگاهی که روی /cdrom مونت شده (فلش boot شده)
+    BOOT_DEV=$(findmnt -n -o SOURCE /cdrom 2>/dev/null | head -1)
+    # روش 2: دستگاهی که روی /source مونت شده
     if [ -z "$BOOT_DEV" ]; then
-        BOOT_DEV=$(cat /proc/cmdline 2>/dev/null | grep -oP 'burner=\K[^ ]+' | head -1)
+        BOOT_DEV=$(findmnt -n -o SOURCE /source 2>/dev/null | head -1)
     fi
-    # روش 3: lsblk
+    # روش 3: پیدا کردن از mount برای root
+    if [ -z "$BOOT_DEV" ]; then
+        BOOT_DEV=$(findmnt -n -o SOURCE / 2>/dev/null | sed 's/[0-9]*$//' | sed 's/p[0-9]*$//' | head -1)
+    fi
+    # روش 4: lsblk برای فلش USB
     if [ -z "$BOOT_DEV" ]; then
         BOOT_DEV=$(lsblk -dno NAME,TRAN 2>/dev/null | grep -i usb | awk '{print "/dev/"$1}' | head -1)
     fi
@@ -28,24 +33,66 @@ find_boot_device() {
 BOOT_DEV=$(find_boot_device)
 echo "Boot device: $BOOT_DEV"
 
-# ─── مونت کردن فلش برای ذخیره خروجی ───
-MOUNT_POINT="/mnt/usb"
-mkdir -p "$MOUNT_POINT"
+# ─── پیدا کردن مکانی برای ذخیره گزارش‌ها ───
+# اولویت 1: پارتیشن writable (ext4 با لیبل writable) که teaiso ساخته
+# اولویت 2: /home اگر پارتیشن writable mount شده
+# اولویت 3: پارتیشن boot (اگر قابل نوشتن باشد)
+# آخرین گزینه: RAM (با هشدار)
+MOUNT_POINT=""
+STORAGE_SOURCE=""
 
-# تلاش برای مونت کردن فلش
-MOUNTED=0
-for part in "${BOOT_DEV}1" "${BOOT_DEV}2" "${BOOT_DEV}" "/dev/sdb1" "/dev/sdc1"; do
-    if [ -b "$part" ]; then
-        mount "$part" "$MOUNT_POINT" 2>/dev/null && MOUNTED=1 && break
+# گزینه 1: پارتیشن writable را مستقیماً mount کن (مطمئن‌ترین)
+mkdir -p /mnt/writable
+for dev in /dev/disk/by-label/writable $(ls /dev/disk/by-label/ 2>/dev/null | grep -i writable | sed 's|^|/dev/disk/by-label/|'); do
+    if [ -b "$dev" ]; then
+        mount -o rw "$dev" /mnt/writable 2>/dev/null && {
+            touch /mnt/writable/.writetest 2>/dev/null && {
+                rm -f /mnt/writable/.writetest
+                MOUNT_POINT="/mnt/writable"
+                STORAGE_SOURCE="$dev (writable)"
+                echo "Using writable partition $dev at /mnt/writable"
+                break
+            }
+            umount /mnt/writable 2>/dev/null
+        }
     fi
 done
 
-# اگه فلش مونت نشد، از رم استفاده کن
-if [ "$MOUNTED" -eq 0 ]; then
-    echo "WARNING: USB not mounted, using RAM disk"
+# گزینه 2: /home که از قبل mount شده (پارتیشن writable)
+if [ -z "$MOUNT_POINT" ] && mountpoint -q /home 2>/dev/null && [ -w /home ]; then
+    MOUNT_POINT="/home"
+    STORAGE_SOURCE="writable (/home)"
+    echo "Using already-mounted writable partition at /home"
+fi
+
+# گزینه 3: mount پارتیشن boot بر روی /mnt/usb
+if [ -z "$MOUNT_POINT" ]; then
+    mkdir -p /mnt/usb
+    for part in "${BOOT_DEV}1" "$BOOT_DEV" "/dev/sdb1" "/dev/sdc1" "/dev/sda1"; do
+        if [ -b "$part" ]; then
+            mount -o rw "$part" /mnt/usb 2>/dev/null && {
+                touch /mnt/usb/.writetest 2>/dev/null && {
+                    rm -f /mnt/usb/.writetest
+                    MOUNT_POINT="/mnt/usb"
+                    STORAGE_SOURCE="$part"
+                    echo "Mounted boot device $part at /mnt/usb (writable)"
+                    break
+                }
+                umount /mnt/usb 2>/dev/null
+            }
+        fi
+    done
+fi
+
+# اگه هیچ‌جا writable پیدا نشد، از RAM استفاده کن (با هشدار)
+if [ -z "$MOUNT_POINT" ]; then
+    echo "WARNING: No writable storage found - using RAM (data lost on shutdown)"
     MOUNT_POINT="/tmp/sysinfo_output"
+    STORAGE_SOURCE="RAM (temporary)"
     mkdir -p "$MOUNT_POINT"
 fi
+
+echo "Storage: $STORAGE_SOURCE -> $MOUNT_POINT"
 
 # ─── ساخت پوشه خروجی ───
 SERIAL=$(cat /sys/class/dmi/id/product_serial 2>/dev/null | tr -d ' \n\r' || echo "unknown")
@@ -214,17 +261,27 @@ cat > "$OUTPUT_DIR/summary.json" <<JSON
 }
 JSON
 
-# ─── لیست فایل‌ها ───
-ls -la "$OUTPUT_DIR" > "$OUTPUT_DIR/file_list.txt"
+# ─── ذخیره لاگ جمع‌آوری روی storage هم ───
+cp "$LOG" "$OUTPUT_DIR/sysinfo.log" 2>/dev/null || true
 
-echo "=== SysInfo Collection Complete ==="
-echo "Total files: $(ls "$OUTPUT_DIR" | wc -l)"
-echo "Output: $OUTPUT_DIR"
+# ─── فهرست فایل‌ها ───
+ls -la "$OUTPUT_DIR" > "$OUTPUT_DIR/file_list.txt" 2>/dev/null || true
 
-# ─── خاموش کردن سیستم ───
+# ─── ساخت آرشیو فشرده برای انتقال آسان ───
+ARCHIVE_NAME="sysinfo_${TIMESTAMP}_${SERIAL}.tar.gz"
+( cd "$(dirname "$OUTPUT_DIR")" && tar czf "$ARCHIVE_NAME" "$(basename "$OUTPUT_DIR")" 2>/dev/null )
+echo "Archive: $(dirname "$OUTPUT_DIR")/$ARCHIVE_NAME"
+ls -lah "$(dirname "$OUTPUT_DIR")/$ARCHIVE_NAME" 2>/dev/null
+
+sync
+
+# ─── پیام خلاصه برای نمایش روی صفحه ───
 echo ""
 echo "========================================="
 echo "  SysInfo Collection Complete!"
+echo "  Storage: $STORAGE_SOURCE"
+echo "  Report:  $OUTPUT_DIR"
+echo "  Archive: $(dirname "$OUTPUT_DIR")/$ARCHIVE_NAME"
 echo "  System will shut down in 10 seconds..."
 echo "========================================="
 sleep 10
