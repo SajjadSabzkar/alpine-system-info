@@ -11,10 +11,10 @@ apk update
 apk upgrade
 
 # ─── نصب پکیج‌های اضافی ───
-apk add lshw --repository=https://dl-cdn.alpinelinux.org/alpine/edge/community 2>/dev/null || true
+apk add lshw --repository=https://dl-cdn.alpinelinux.org/alpine/v3.22/community 2>/dev/null || true
 
-# ─── کپی اسکریپت جمع‌آوری اطلاعات ───
-install -m 755 /tmp/system_info.sh /usr/sbin/system_info.sh
+# ─── اطمینان از اجرایی بودن اسکریپت جمع‌آوری اطلاعات ───
+chmod +x /usr/sbin/system_info.sh
 
 # ─── تنظیم رمز root ───
 echo -e "live\nlive" | passwd root

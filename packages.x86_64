@@ -12,14 +12,12 @@ util-linux
 iproute2
 ethtool
 net-tools
-sensors-detect
 lm-sensors
 inxi
 hwinfo
 lsblk
 bash
 coreutils
-procps
 gawk
 sed
 grep

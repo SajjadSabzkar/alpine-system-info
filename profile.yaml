@@ -1,10 +1,11 @@
 name: sysinfo
 distro: alpine
-codename: edge
+codename: v3.22
 publisher: SysInfo Project
 label: SYSINFO_LIVE
 application_id: SysInfo Live - System Information Collector
 arch: x86_64
+airootfs_directory: airootfs
 compression: squashfs||-comp gzip
 grub_cfg: grub.cfg
 packages:
