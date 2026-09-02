@@ -36,8 +36,9 @@ cat << 'SERVICE' > /etc/init.d/system_info_service
 description="SysInfo Auto-Collector"
 
 depend() {
-    need sysinit
-    after localmount bootmisc
+    # نمی‌توان از sysinit استفاده کرد چون سرویسی با این نام در OpenRC وجود ندارد
+    need root localmount
+    after bootmisc udev mdev
 }
 
 start() {
