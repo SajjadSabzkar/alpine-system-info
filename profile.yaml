@@ -11,7 +11,7 @@ grub_cfg: grub.cfg
 packages:
  - packages.x86_64
 file_permissions:
- - /etc/shadow|0:0|400
+ - "/etc/shadow|0:0:400"
 linux_args: quiet loglevel=3
 customize_airootfs:
  - customize-airootfs.sh
