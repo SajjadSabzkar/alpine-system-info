@@ -45,15 +45,16 @@ else
 fi
 cd "$SCRIPT_DIR"
 
-# ─── افزایش حجم پارتیشن writable از 4MB به 256MB ───
-# teaiso به طور پیش‌فرض فقط 4MB فضای ذخیره می‌سازد که برای گزارش‌ها کافی نیست
-# فقط writable.img را بزرگ می‌کنیم، efi.img باید بدون تغییر بماند
-echo "[2.5/4] Enlarging writable partition to 256MB..."
+# ─── پیکربندی پارتیشن writable (FAT32 برای خواندن در ویندوز/مک/لینوکس) ───
+# 1) حجم: از 4MB به 256MB افزایش
+# 2) فرمت: از ext4 به FAT32 تغییر تا بدون ابزار اضافه روی همه سیستم‌ها دیده شود
+echo "[2.5/4] Configuring writable partition (FAT32, 256MB)..."
 if [ -f "/usr/lib/teaiso/common/isowork.py" ]; then
     sed -i '/writable.img/s/bs=4M count=1 oflag=sync/bs=4M count=64 oflag=sync/' /usr/lib/teaiso/common/isowork.py
-    echo "  patched writable.img size to 256MB"
+    sed -i '/writable.img/s|mkfs.ext4 -b 1024 -L writable|mkfs.vfat -F 32 -n writable|' /usr/lib/teaiso/common/isowork.py
+    echo "  patched writable.img: 256MB, FAT32 (label: writable)"
 else
-    echo "  WARNING: could not find teaiso isowork.py to patch writable size"
+    echo "  WARNING: could not find teaiso isowork.py to patch writable config"
 fi
 
 # ─── ساخت ISO ───
